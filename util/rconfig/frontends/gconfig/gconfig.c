@@ -36,7 +36,6 @@ void init()
     initscr();
     start_color();
     standend();
-    raw();
     keypad(stdscr, TRUE);
     noecho();
     set_escdelay(25);
@@ -46,9 +45,9 @@ void init()
 
 static void sig_cleanup(int sig)
 {
+	endwin();
 	printf("\n");
 	printf("Received SIG%s, exiting...\n", sig == SIGINT ? "INT" : "TERM");
-
 	rconfig_cleanup_partial();
 	exit(0);
 }
@@ -65,21 +64,15 @@ static void usage(FILE *f, const char *prog)
 	fprintf(f, "\n");
 	fprintf(f, "    -a, --arch=ARCH\n");
 	fprintf(f, "        use ARCH as target architecture\n");
-	fprintf(f, "    -d, --default\n");
-	fprintf(f, "        use default values from rconfig files\n");
 	fprintf(f, "    -h, --help\n");
 	fprintf(f, "        print this help text and exit\n");
-	fprintf(f, "    -l, --lint\n");
-	fprintf(f, "        verify rconfig file syntax and structure\n");
 	fprintf(f, "    -o, --output=OUTFILE\n");
 	fprintf(f, "        write output to OUTFILE\n");
 }
 
 static struct option long_opts[] = {
 	{ "arch",       required_argument, NULL, 'a' },
-	{ "default",    no_argument,       NULL, 'd' },
 	{ "help",       no_argument,       NULL, 'h' },
-	{ "lint",       no_argument,       NULL, 'l' },
 	{ "output",     required_argument, NULL, 'o' },
 	{ 0, 0, 0, 0 }
 };
@@ -106,15 +99,9 @@ int main(int argc, char **argv)
 			snprintf(arch_dir, ARCHDIR_BUFSIZE, "arch/%s", arch);
 			rconfig_set_archdir(arch_dir);
 			break;
-		case 'd':
-			callback = config_default;
-			break;
 		case 'h':
 			usage(stdout, PROGRAM_NAME);
 			return 0;
-		case 'l':
-			is_linting = 1;
-			break;
 		case 'o':
 			snprintf(outfile, 256, optarg);
 			break;
@@ -148,11 +135,7 @@ int main(int argc, char **argv)
 	signal(SIGINT, sig_cleanup);
 	signal(SIGTERM, sig_cleanup);
 
-	if (!is_linting && callback == config_interactive) {
-		printf(PROGRAM_NAME " " PROGRAM_VERSION " interactive mode\n");
-		printf("Configuring radix for target architecture %s\n", arch);
-	}
-
+	init();
 	if (optind != argc) {
 		for (; optind < argc; ++optind) {
 			if (stat(argv[optind], &sb) != 0) {
@@ -163,13 +146,11 @@ int main(int argc, char **argv)
 				        argv[optind]);
 				exit_status = 1;
 			} else {
-				init();
-				rconfig_parse_file(argv[optind], callback);
+				rconfig_parse_file(argv[optind], callback,RCONFIG_CB_CONFIG);
 			}
 		}
 	} else {
-		init();
-		rconfig_recursive(callback);
+		rconfig_recursive(callback,RCONFIG_CB_CONFIG);
 	}
 
 	endwin();
