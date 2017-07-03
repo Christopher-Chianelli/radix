@@ -1,6 +1,6 @@
 /*
  * util/rconfig/interactive.h
- * Copyright (C) 2017 Alexei Frolov
+ * Copyright (C) 2017 Christopher Chianelli
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,6 @@
 
 struct rconfig_config;
 
-int config_interactive(struct rconfig_config *conf);
+void config_interactive(struct rconfig_config *conf);
 
 #endif /* INTERACTIVE_H */

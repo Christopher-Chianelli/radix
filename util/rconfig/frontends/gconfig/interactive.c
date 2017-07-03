@@ -213,16 +213,16 @@ static int interactive_int(struct rconfig_config *conf)
 
 static int interactive_options(struct rconfig_config *conf)
 {
-	char buf[256];
 	int action;
-	int choice = conf->default_val;
+	size_t choice = conf->default_val;
 	size_t i;
 	curs_set(0);
 
-	printw("%s [%d]\n", conf->desc, conf->default_val);
+	move(3,0);
+	printw("%s\nDefault: (%lu) %s", conf->desc, conf->default_val, conf->opts.options[conf->default_val - 1].desc);
 	for (i = 0; i < conf->opts.num_options; ++i)
 	{
-		if (i + 1 == conf->default_val)
+		if (i + 1 == (size_t)conf->default_val)
 		{
 			attrset(A_BOLD);
 		}
@@ -230,7 +230,8 @@ static int interactive_options(struct rconfig_config *conf)
 		{
 			attrset(A_NORMAL);
 		}
-		printw("(%lu) %s\n", i + 1, conf->opts.options[i].desc);
+		move(5 + i,0);
+		printw("(%lu) %s", i + 1, conf->opts.options[i].desc);
 	}
 
 	while ((action = getch()) != ENTER)
@@ -240,10 +241,11 @@ static int interactive_options(struct rconfig_config *conf)
 	            case KEY_UP:
 				    if (choice > 1)
 					{
-						choice++;
-						chgat(-1, A_NORMAL, 1, NULL);
-						move(choice + 3,0);
-						chgat(-1, A_BOLD, 1, NULL);
+						move(choice + 4,0);
+						choice--;
+						chgat(-1, A_NORMAL, 0, NULL);
+						move(choice + 4,0);
+						chgat(-1, A_BOLD, 0, NULL);
 						refresh();
 					}
 					break;
@@ -251,10 +253,11 @@ static int interactive_options(struct rconfig_config *conf)
 			    case KEY_DOWN:
 				    if (choice < conf->opts.num_options)
 					{
-						choice--;
-						chgat(-1, A_NORMAL, 1, NULL);
-						move(choice + 3,0);
-						chgat(-1, A_BOLD, 1, NULL);
+						move(choice + 4,0);
+						choice++;
+						chgat(-1, A_NORMAL, 0, NULL);
+						move(choice + 4,0);
+						chgat(-1, A_BOLD, 0, NULL);
 						refresh();
 					}
 	    }
@@ -285,10 +288,8 @@ static char current_section[CURR_BUFSIZE];
 	 }
 	 move(restore,0);
  }
-int config_interactive(struct rconfig_config *conf)
+void config_interactive(struct rconfig_config *conf)
 {
-	int ret;
-
 	if (strcmp(conf->section->name, current_section) != 0) {
 		if (strcmp(conf->section->file->name, current_file) != 0) {
 			clear_window_from(0);
@@ -315,18 +316,16 @@ int config_interactive(struct rconfig_config *conf)
 	move(3,0);
 	switch (conf->type) {
 	case RCONFIG_BOOL:
-		ret = interactive_bool(conf);
+		conf->selection = interactive_bool(conf);
 		break;
 	case RCONFIG_INT:
-		ret = interactive_int(conf);
+		conf->selection = interactive_int(conf);
 		break;
 	case RCONFIG_OPTIONS:
-		ret = interactive_options(conf);
+		conf->selection = interactive_options(conf);
 		break;
 	default:
 	    endwin();
 		exit(1);
 	}
-
-	return ret;
 }
