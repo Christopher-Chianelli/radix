@@ -17,6 +17,13 @@ endif
 # objects files for cli frontend
 CLI_OBJ := cli.o interactive.o
 
+# curses rconfig frontend
+ifeq ($(FRONTEND),gconfig)
+	PROGRAM_NAME := gconfig
+endif
+
+GCONFIG_OBJ := gconfig.o interactive.o
+
 ################################################################################
 
 FRONTEND_UPPER := $(shell echo $(FRONTEND) | tr [:lower:] [:upper:])
