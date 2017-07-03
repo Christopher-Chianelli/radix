@@ -208,6 +208,7 @@ static int interactive_int(struct rconfig_config *conf)
 static int interactive_options(struct rconfig_config *conf)
 {
 	char buf[256];
+	int action;
 	int choice = conf->default_val;
 	size_t i;
 	curs_set(0);
@@ -287,7 +288,7 @@ int config_interactive(struct rconfig_config *conf)
 		move(1,0);
 		attrset(A_BOLD);
 		strncpy(current_section, conf->section->name, CURR_BUFSIZE);
-		n = printw("%s", current_section);
+		printw("%s", current_section);
 	}
 	else
 	{
